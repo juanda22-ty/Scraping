@@ -1,0 +1,18 @@
+[
+  {
+    "id": "product-1",
+    "title": "Primer libro",
+    "price": 18.0,
+    "currency": "EUR",
+    "url": "https://books.toscrape.com/book1",
+    "available": true
+  },
+  {
+    "id": "product-3",
+    "title": "Tercer libro",
+    "price": 22.5,
+    "currency": "EUR",
+    "url": "https://books.toscrape.com/book3",
+    "available": true
+  }
+]

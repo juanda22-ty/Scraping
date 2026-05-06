@@ -1,0 +1,20 @@
+{
+  "name": "monitor-ecommerce-api",
+  "version": "1.0.0",
+  "description": "API para recibir snapshots de productos y detectar cambios",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "joi": "^18.1.2",
+    "mongoose": "^7.5.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "supertest": "^6.3.0"
+  }
+}

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de E-commerce - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4caf50;
+        }
+        .status-dot.error {
+            background: #f44336;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .card .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .changes-list {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .changes-list h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .change-item {
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .change-item.new {
+            border-left-color: #4caf50;
+        }
+        .change-item.removed {
+            border-left-color: #f44336;
+        }
+        .change-item.price {
+            border-left-color: #ff9800;
+        }
+        .change-item .type {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .change-item.new .type {
+            background: #4caf50;
+            color: white;
+        }
+        .change-item.removed .type {
+            background: #f44336;
+            color: white;
+        }
+        .change-item.price .type {
+            background: #ff9800;
+            color: white;
+        }
+        .change-item .title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .change-item .price-info {
+            font-size: 12px;
+            color: #666;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Monitor de E-commerce</h1>
+            <p>Sistema de detección de cambios en catálogos de productos</p>
+            <div class="status">
+                <div class="status-item">
+                    <div class="status-dot" id="api-status"></div>
+                    <span>API: <strong id="api-text">Conectando...</strong></span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="db-status"></div>
+                    <span>Base de datos: <strong id="db-text">Conectando...</strong></span>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid" id="stats">
+            <div class="card">
+                <h2>Productos detectados</h2>
+                <div class="number" id="total-new">0</div>
+            </div>
+            <div class="card">
+                <h2>Cambios de precio</h2>
+                <div class="number" id="total-price">0</div>
+            </div>
+            <div class="card">
+                <h2>Productos eliminados</h2>
+                <div class="number" id="total-removed">0</div>
+            </div>
+        </div>
+
+        <div class="changes-list">
+            <h2>Últimos cambios detectados</h2>
+            <div id="changes" class="loading">Cargando datos...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                // Check health
+                const healthRes = await fetch('http://localhost:3000/health');
+                if (healthRes.ok) {
+                    document.getElementById('api-status').classList.remove('error');
+                    document.getElementById('api-text').textContent = 'Conectada';
+                    document.getElementById('db-status').classList.remove('error');
+                    document.getElementById('db-text').textContent = 'Conectada';
+                }
+
+                // Get changes
+                const changesRes = await fetch('http://localhost:3000/changes');
+                const data = await changesRes.json();
+                const changes = data.changes || [];
+
+                // Count by type
+                const types = { new: 0, price: 0, removed: 0 };
+                changes.forEach(c => {
+                    if (types.hasOwnProperty(c.type)) types[c.type]++;
+                });
+
+                document.getElementById('total-new').textContent = types.new;
+                document.getElementById('total-price').textContent = types.price;
+                document.getElementById('total-removed').textContent = types.removed;
+
+                // Display recent changes (first 10)
+                const changesHtml = changes.slice(0, 10).map(c => {
+                    let html = `<div class="change-item ${c.type}">
+                        <div class="type">${c.type.toUpperCase()}</div>
+                        <div class="title">${escapeHtml(c.title)}</div>`;
+                    
+                    if (c.type === 'price') {
+                        const change = ((c.newPrice - c.oldPrice) / c.oldPrice * 100).toFixed(2);
+                        html += `<div class="price-info">£${c.oldPrice} → £${c.newPrice} (${change > 0 ? '+' : ''}${change}%)</div>`;
+                    }
+                    
+                    html += `</div>`;
+                    return html;
+                }).join('');
+
+                document.getElementById('changes').innerHTML = changesHtml || '<p class="loading">No hay cambios detectados</p>';
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('api-status').classList.add('error');
+                document.getElementById('api-text').textContent = 'Desconectada';
+                document.getElementById('db-status').classList.add('error');
+                document.getElementById('db-text').textContent = 'Desconectada';
+                document.getElementById('changes').innerHTML = `<p class="loading">Error: No se pudo conectar a la API</p>`;
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Load data on page load
+        loadData();
+
+        // Refresh every 5 seconds
+        setInterval(loadData, 5000);
+    </script>
+</body>
+</html>

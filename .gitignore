@@ -1,0 +1,8 @@
+node_modules/
+api/node_modules/
+.venv/
+.env
+.DS_Store
+pdf_text_extracted.txt
+__pycache__/
+failed_snapshot.json
